@@ -1,0 +1,36 @@
+[project]
+name = "partialdispatch"
+version = "0.1.0"
+description = "Function-level logic inspired by functools.singledispatch"
+authors = [
+    {name = "Dom Weldon",email = "dom.weldon@gmail.com"},
+]
+dependencies = []
+requires-python = ">=3.8"
+readme = "README.md"
+license = {text = "MIT"}
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.0.285",
+    "isort>=5.12.0",
+    "black>=23.7.0",
+    "bandit>=1.7.5",
+    "pysa>=0.3b5",
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "mypy>=1.5.1",
+]
+repl = [
+    "bpython>=0.24",
+]
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.black]
+line_length = 79
+
+[tool.pytest.ini_options]
+addopts = "--cov=partialdispatch --cov-append --cov-report html"
