@@ -3,7 +3,6 @@ import typing
 
 AnnotationType = typing.Union[
     type,
-    typing._GenericAlias,
     typing._SpecialForm,
 ]
 

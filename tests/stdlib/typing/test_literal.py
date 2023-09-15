@@ -1,6 +1,7 @@
 """Check required behaviours of typing module."""
 import inspect
 import sys
+import types
 import typing
 
 import pytest
@@ -56,6 +57,51 @@ def test_literal_with_origin():
 
     # assert
     assert sig.parameters["a"].annotation.__origin__ is typing.Literal
+
+
+def test_union_literals():
+    """Proove unions of literals are Union"""
+    # arrange
+    lit_union = typing.Union[typing.Literal[1], typing.Literal[2]]
+
+    # assert
+    assert lit_union.__origin__ is typing.Union
+
+
+@pytest.mark.skipif(
+    sys.version_info <= (3, 10),
+    reason="Special forms introduced in 3.10",
+)
+def test_literal_special_forms_are_union_others_not():
+    """Proove that special-form unions of Literal are Union"""
+    # arrange
+    lit_sf = typing.Literal[1] | typing.Literal[2]
+    other_sf = float | str
+
+    # assert
+    assert lit_sf.__origin__ == typing.Union
+    assert isinstance(other_sf, types.UnionType)
+
+
+def test_literal_types_are_not_types():
+    """Proove that instances of literal are not types"""
+    # arrange
+    lit = typing.Literal[1]
+
+    # assert
+    assert not isinstance(lit, type)
+
+
+@pytest.mark.parametrize(
+    ("anno_type",),
+    [
+        (typing.Union[str, float],),
+        (typing.Optional[float],),
+    ],
+)
+def special_unions_are_not_types(anno):
+    """Proove that a Union is not a type"""
+    assert not isinstance(anno, type)
 
 
 @pytest.mark.parametrize(

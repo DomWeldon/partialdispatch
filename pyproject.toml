@@ -1,7 +1,7 @@
 [project]
 name = "partialdispatch"
 version = "0.1.0"
-description = "Function-level logic inspired by functools.singledispatch"
+description = "Function-level logic inspried by functools.singledispatch"
 authors = [
     {name = "Dom Weldon",email = "dom.weldon@gmail.com"},
 ]
@@ -20,6 +20,7 @@ dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
     "mypy>=1.5.1",
+    "pdm-multirun @ file:///${PROJECT_ROOT}/../pdm-multirun",
 ]
 repl = [
     "bpython>=0.24",

@@ -44,12 +44,17 @@ def test__singledispatch_literal__error_when_called_kwargs_only():
     assert expected_msg in msg
 
 
+def test__is_literal_annotation__delayed_annos_positive():
+    """Can it use literal annotations?"""
+
+
 @pytest.mark.parametrize(
     ("annotation",),
     [
         (typing.Literal[1, 2],),
         (typing.Literal["a"],),
         (typing.Literal[None],),
+        (typing.Optional[typing.Literal[1]],),
         (typing.Union[typing.Literal[1, 2], typing.Literal[3, 4]],),
         (
             typing.Union[
@@ -96,6 +101,8 @@ def test__is_literal_annotation__negative(annotation):
     ),
     [
         [typing.Literal[1], {1}],
+        [typing.Literal[None], {None}],
+        [typing.Optional[typing.Literal["abc"]], {None, "abc"}],
         [typing.Literal[1, 2], {1, 2}],
         [typing.Union[typing.Literal[1], typing.Literal[2, 3]], {1, 2, 3}],
     ],
@@ -166,14 +173,14 @@ def test__singledispath_literal__dispatches_calls():
     """Example integration test of desired functionality"""
     # arrange
     mocks = {
-        "default": mock.Mock(),
+        str: mock.Mock(),
         "abc": mock.Mock(),
         123: mock.Mock(),
     }
 
     @mod.singledispatch_literal
     def func(a):
-        mocks["default"](a)
+        mocks[str](a)
 
     @func.register
     def _(a: typing.Literal["abc"]):
@@ -203,7 +210,7 @@ def test__singledispatch_literal__can_take_callable():
     def example_func(a, b: int):
         raise Exception("I should not be called")
 
-    @mod.singledispatch_literal
+    @example_func.register
     def _(a: str, b: int):
         not_target(a, b)
 
@@ -251,7 +258,7 @@ def test__singledispatch_literal__can_take_type(target_val):
 
     # act
     @example_func.register(target_val, literal=True)
-    def _target(a, b):
+    def _target(a: type, b):
         target("hit target", b)
 
     example_func(target_val, b)
