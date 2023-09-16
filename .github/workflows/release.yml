@@ -4,5 +4,23 @@ on:
     branches:
       - main
 jobs:
-  Checks:
-    uses: /.github/workflows/push-checks.yml
+  checks:
+    uses: ./.github/workflows/push-checks.yml
+
+  bump-version:
+    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+    runs-on: ubuntu-latest
+    name: "Bump version and create changelog with commitizen"
+    needs: []
+    permissions:
+      contents: write
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+        with:
+          # token: "${{ secrets.PERSONAL_ACCESS_TOKEN }}"
+          fetch-depth: 0
+      - name: Create bump and changelog
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
