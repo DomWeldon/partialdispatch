@@ -6,7 +6,7 @@ groups = ["default", "dev", "repl"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:fda73a81811131bfe6f49b923a7b389c5450530f3fbaaf46414ba27e3fed4b08"
+content_hash = "sha256:3d9bdc4ec73f55953f643f189d3f52cd54c00e03714605a794ecb2c8b97584a9"
 
 [[package]]
 name = "bandit"
@@ -702,14 +702,6 @@ dependencies = [
 files = [
     {file = "pyproject_hooks-1.0.0-py3-none-any.whl", hash = "sha256:283c11acd6b928d2f6a7c73fa0d01cb2bdc5f07c57a2eeb6e83d5e56b97976f8"},
     {file = "pyproject_hooks-1.0.0.tar.gz", hash = "sha256:f271b298b97f5955d53fb12b72c1fb1948c22c1a6b70b315c54cedaca0264ef5"},
-]
-
-[[package]]
-name = "pysa"
-version = "0.3b5"
-summary = "Reverse your Servers Configuration"
-files = [
-    {file = "Pysa-0.3b5.tar.gz", hash = "sha256:2f86e5281b34dbae2b681f33a92c3795a1f11bddd5ddd30f50b581ea79c871f3"},
 ]
 
 [[package]]
