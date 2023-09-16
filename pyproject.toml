@@ -1,6 +1,6 @@
 [project]
 name = "partialdispatch"
-version = "0.1.0"
+version = "0.0.1"
 description = "Function-level logic inspried by functools.singledispatch"
 authors = [
     {name = "Dom Weldon",email = "dom.weldon@gmail.com"},
@@ -32,6 +32,15 @@ checks = [
     "black>=23.7.0",
     "bandit>=1.7.5",
 ]
+ci = [
+    "commitizen>=3.9.0",
+]
+
+[tool.commitizen]
+version = "0.0.1"
+update_changelog_on_bump = true
+provider = "pep621"
+major_version_zero = true
 
 [build-system]
 requires = ["pdm-backend"]
