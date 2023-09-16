@@ -1,6 +1,6 @@
 [project]
 name = "partialdispatch"
-version = "0.0.1"
+version = "0.1.0"
 description = "Function-level logic inspried by functools.singledispatch"
 authors = [
     {name = "Dom Weldon",email = "dom.weldon@gmail.com"},
@@ -37,9 +37,8 @@ ci = [
 ]
 
 [tool.commitizen]
-version = "0.0.1"
 update_changelog_on_bump = true
-provider = "pep621"
+version_provider = "pep621"
 major_version_zero = true
 
 [build-system]
