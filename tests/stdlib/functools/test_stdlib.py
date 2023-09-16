@@ -39,31 +39,36 @@ class TestSingleDispatchLiteralAgainstStdLib(_TestSingleDispatch):
     ...
 
 
-xfail_strict = functools.partial(pytest.mark.xfail, strict=True)
+xfail_strict = pytest.mark.xfail(strict=True)
+filter_deprecation_warning_not_none_test_case = pytest.mark.filterwarnings(
+    "ignore:It is deprecated to return a value that is not "
+    "None from a test case"
+)
 
 # some tests will fail or should be skipped
 VERSION_TEST_MARKS_MAP = {
-    # list them by python versions
+    # tuple of (<= and >) versions each mark will cover
     ((3, 8), (3, 13)): {
-        "test_callable_register": [xfail_strict],
-        "test_classmethod_register": [xfail_strict],
-        "test_invalid_positional_argument": [xfail_strict],
-        "test_staticmethod_register": [xfail_strict],
-        "test_type_ann_register": [xfail_strict],
         "test_invalid_registrations": [
             pytest.mark.skip(reason="Not valid - rewrite to flip assertions.")
         ],
     },
-    ((3, 9), (3, 13)): {
-        "test_classmethod_type_ann_register": [xfail_strict],
-        "test_staticmethod_type_ann_register": [xfail_strict],
-        "test_double_wrapped_methods": [xfail_strict],
-        "test_method_wrapping_attributes": [xfail_strict],
-        # it is simply not possible to pass this test and
-        # `test_register_genericalias`, whilst also passing
-        # `test_register_genericalias_decorator`
-        # "test_register_genericalias_annotation": [xfail_strict],
-    },
+    # Ignore deprecation warnings coming from the stdlib tests
+    ((3, 11), (3, 13)): {
+        "test_classmethod_type_ann_register": [
+            filter_deprecation_warning_not_none_test_case
+        ],
+        "test_double_wrapped_methods": [
+            filter_deprecation_warning_not_none_test_case
+        ],
+        "test_method_wrapping_attributes": [
+            filter_deprecation_warning_not_none_test_case
+        ],
+        "test_staticmethod_type_ann_register": [
+            filter_deprecation_warning_not_none_test_case
+        ],
+    }
+    # use this space to temporarily turn off some tests when developing features
 }
 
 # get relevant sets of marks (each a dict)
