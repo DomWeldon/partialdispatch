@@ -1,3 +1,9 @@
+## 0.1.1 (2023-09-16)
+
+### Fix
+
+- provider -> version_provider
+
 ## 0.1.0 (2023-09-16)
 
 ### Feat
