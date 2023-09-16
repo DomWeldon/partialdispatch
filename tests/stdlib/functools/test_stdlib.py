@@ -7,40 +7,62 @@ import pytest
 
 import partialdispatch
 
-patched_func = mock.patch.object(
+# Create patched versions of partialdispatch.singledispatch and
+# partialdispatch.singledispatchmethod, where the functools versions of these
+# functions (still) point to the standard library implementations.
+patched_singledispatch = mock.patch.object(
     functools,
     "singledispatch",
     functools.singledispatch,
 )(partialdispatch.singledispatch_literal)
+patched_singledispatchmethod = mock.patch.object(
+    functools,
+    "singledispatchmethod",
+    functools.singledispatchmethod,
+)(partialdispatch.singledispatchmethod_literal)
 
 
-@mock.patch.object(functools, "singledispatch", patched_func)
+# However, in the standard library test module where stdlib tests live, patch
+# the original functools.singledispatch and functools.singledispatchmethod
+# names/addresses so that they now point to the patched functions we created
+# above.
+# This means that in the test module, singledispatch and singledispatchmethod
+# refer to our implementation, and so it's our implementation that gets tested
+# by the standard library tests, but inside our code, we still point back to
+# the standard library versions, meaning we can use the original functions as
+# required, and we don't accidentally recurse through patches.
+@mock.patch.object(functools, "singledispatch", patched_singledispatch)
+@mock.patch.object(
+    functools, "singledispatchmethod", patched_singledispatchmethod
+)
 class TestSingleDispatchLiteralAgainstStdLib(_TestSingleDispatch):
     ...
 
 
+xfail_strict = functools.partial(pytest.mark.xfail, strict=True)
+
 # some tests will fail or should be skipped
 VERSION_TEST_MARKS_MAP = {
     # list them by python versions
-    ((3, 8), (3, 12)): {
-        "test_callable_register": [pytest.mark.xfail],
-        "test_classmethod_register": [pytest.mark.xfail],
-        "test_invalid_positional_argument": [pytest.mark.xfail],
-        "test_staticmethod_register": [pytest.mark.xfail],
-        "test_type_ann_register": [pytest.mark.xfail],
+    ((3, 8), (3, 13)): {
+        "test_callable_register": [xfail_strict],
+        "test_classmethod_register": [xfail_strict],
+        "test_invalid_positional_argument": [xfail_strict],
+        "test_staticmethod_register": [xfail_strict],
+        "test_type_ann_register": [xfail_strict],
         "test_invalid_registrations": [
             pytest.mark.skip(reason="Not valid - rewrite to flip assertions.")
         ],
     },
-    ((3, 9), (3, 12)): {
-        "test_classmethod_type_ann_register": [pytest.mark.xfail],
-        "test_staticmethod_type_ann_register": [pytest.mark.xfail],
-        "test_double_wrapped_methods": [pytest.mark.xfail],
-        "test_method_wrapping_attributes": [pytest.mark.xfail],
+    ((3, 9), (3, 13)): {
+        "test_classmethod_type_ann_register": [xfail_strict],
+        "test_staticmethod_type_ann_register": [xfail_strict],
+        "test_double_wrapped_methods": [xfail_strict],
+        "test_method_wrapping_attributes": [xfail_strict],
         # it is simply not possible to pass this test and
         # `test_register_genericalias`, whilst also passing
         # `test_register_genericalias_decorator`
-        # "test_register_genericalias_annotation": [pytest.mark.xfail],
+        # "test_register_genericalias_annotation": [xfail_strict],
     },
 }
 

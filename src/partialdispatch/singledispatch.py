@@ -51,6 +51,26 @@ else:
     P = ...
 
 
+def _get_signature(cble: typing.Callable) -> inspect.Signature:
+    """Get signature from callable, including descriptors prior to 3.10.
+
+    Prior to python 3.10 descriptor protocol objects, like methods decorated
+    with staticmethod or classmethod, were not callable (see bpo-43682).
+    """
+    # are we trying to get a class/staticmethod in 3.8 or 3.9?
+    if (
+        sys.version_info <= (3, 10) and isinstance(cble, (staticmethod))
+    ) or isinstance(cble, classmethod):
+        # Yes. Here we use a workaround of the descriptor protocol to simply
+        # get the underlying callable. We do not know what the correct class
+        # to provide here is, but since we won't be calling the callable, we
+        # can just provide object, allowing us to get a signature.
+
+        return inspect.signature(cble.__func__)
+
+    return inspect.signature(cble)
+
+
 def is_typey(obj: typing.Any) -> bool:
     """Does this object appear to be a type or special form?"""
 
@@ -96,15 +116,35 @@ def flatten_literal_params(annotation: typing._SpecialForm) -> set:
     )
 
 
+def _get_first_param(
+    func: typing.Callable, sig: inspect.Signature
+) -> inspect.Parameter:
+    """Get relevant first parameter for singledispatch."""
+    params = iter(sig.parameters.values())
+
+    # is it a classmethod?
+    if isinstance(func, classmethod):
+        # yes, skip the first param
+        _ = next(params)
+
+    return next(params)
+
+
 def _check_has_pos_params(func: typing.Callable[P, T], sig: inspect.Signature):
     """Raise a TypeError if no args can be positional."""
-
+    i = 0
     for arg in sig.parameters.values():
+        # is it a classmethod?
+        if i == 0 and isinstance(func, classmethod):
+            # yes, skip the cls param
+            i += 1
+            continue
+
         if arg.kind is not inspect.Parameter.KEYWORD_ONLY:
             return
 
     name = func.__name__ if hasattr(func, "__name__") else "unknown function"
-    first_param = next(iter(sig.parameters))
+    first_param = _get_first_param(func, sig)
 
     raise TypeError(
         f"Invalid function passed to singledispatch_literal. Function {name} "
@@ -235,11 +275,18 @@ def _check_passed_as_annotation(f: typing.Callable) -> bool:
         return False
 
 
+def _get_first_type_hint(func: typing.Callable, sig: inspect.Signature):
+    first_param = _get_first_param(func=func, sig=sig)
+    hints = typing.get_type_hints(func)
+
+    return hints[first_param.name]
+
+
 def _check_first_pos_param_annotated(
     funcname: str, func: typing.Callable[P, T], sig: inspect.Signature
 ):
     """Check whether signature has enough args and annotations."""
-    first_param = next(iter(sig.parameters.values()))
+    first_param = _get_first_param(func=func, sig=sig)
     if first_param.annotation is inspect._empty:
         name = (
             func.__name__ if hasattr(func, "__name__") else "unknown function"
@@ -256,15 +303,12 @@ def _check_first_pos_param_annotated(
 def singledispatch_literal(f: typing.Callable[P, T]) -> typing.Callable[P, T]:
     """Wrapper around functools.stdlib supporting literal arguments."""
     # start inspecting function
-    sig = inspect.signature(f)
-
-    _check_has_pos_params(func=f, sig=sig)
-
-    first_param = next(iter(sig.parameters))
-    funcname = getattr(f, "__name__", "singledispatch_literal function")
+    sig = _get_signature(f)
 
     # determine that function is valid
-    _check_has_pos_params(f, sig)
+    _check_has_pos_params(func=f, sig=sig)
+    first_param = next(iter(sig.parameters))
+    funcname = getattr(f, "__name__", "singledispatch_literal function")
 
     # wrap it for type-based use
     stdlib_wrapped = functools.singledispatch(f)
@@ -301,7 +345,12 @@ def singledispatch_literal(f: typing.Callable[P, T]) -> typing.Callable[P, T]:
         func: typing.Optional[typing.Callable[P, T]] = None,
         *,
         literal: bool = False,
-    ):
+    ) -> typing.Union[
+        typing.Callable[P, T],
+        typing.Callable[
+            [typing.Any, typing.Callable[P, T], bool], typing.Callable[P, T]
+        ],
+    ]:
         """Register a new implementation for the given value or type.
 
         The function will first look to see if the first positional argument
@@ -344,7 +393,6 @@ def singledispatch_literal(f: typing.Callable[P, T]) -> typing.Callable[P, T]:
         """
         nonlocal literal_registry
         sig: inspect.Signature
-        first_param: inspect.Parameter
         passed_as_annotation: bool = _check_passed_as_annotation(func)
 
         # Is the decorator being called like
@@ -372,7 +420,16 @@ def singledispatch_literal(f: typing.Callable[P, T]) -> typing.Callable[P, T]:
                 literal  # value, user told us
                 or is_literal_annotation(value)
                 or is_typey(value)
-                or not callable(value)
+                or (
+                    not callable(value)
+                    and not (
+                        isinstance(value, classmethod)
+                        or (
+                            sys.version_info < (3, 10)
+                            and isinstance(value, staticmethod)
+                        )
+                    )
+                )
             ):
                 # definitely our value, it was called like
                 # @f.register(<SomeValueOrType>)
@@ -386,17 +443,14 @@ def singledispatch_literal(f: typing.Callable[P, T]) -> typing.Callable[P, T]:
             value, func = None, value
             passed_as_annotation = True
 
-        sig = inspect.signature(func)
+        sig = _get_signature(func)
 
         # check we're valid to continue
         _check_has_pos_params(func, sig)
-        first_param = next(iter(sig.parameters.values()))
-
         if value is None and not literal:
             # get the annotation
             _check_first_pos_param_annotated(funcname, func, sig)
-            hints = typing.get_type_hints(func)
-            value = hints[first_param.name]
+            value = _get_first_type_hint(func=func, sig=sig)
 
         # is the value a literal?
         if is_literal_annotation(value):
@@ -438,8 +492,8 @@ def singledispatch_literal(f: typing.Callable[P, T]) -> typing.Callable[P, T]:
 
             raise TypeError(
                 "When used with singledispatch or singledispatch_literal, "
-                f"{funcname} requires at least one argument, {first_param}, "
-                "to be passed positionally. Try calling the function like "
+                f"{funcname} requires at least 1 positional argument. "
+                "Try calling the function like "
                 f"{funcname}({val}, ...) instead of "
                 f"{funcname}({first_param}={val})."
             )
@@ -464,4 +518,88 @@ def singledispatch_literal(f: typing.Callable[P, T]) -> typing.Callable[P, T]:
     return wrapper
 
 
-__all__ = ["singledispatch_literal"]
+class singledispatchmethod_literal:
+    """Single-dispatch generic with literal support, method descriptor.
+
+    Supports wrapping existing descriptors and handles non-descriptor
+    callables as instance methods.
+    """
+
+    def __init__(self, func: typing.Callable[P, T]):
+        if not callable(func) and not hasattr(func, "__get__"):
+            raise TypeError(f"{func!r} is not callable or a descriptor")
+
+        self.dispatcher = singledispatch_literal(func)
+        self.func = func
+
+    def register(
+        self,
+        value: typing.Any,
+        method=None,
+        literal: bool = False,
+    ) -> typing.Union[
+        typing.Callable[P, T],
+        typing.Callable[
+            [
+                "singledispatchmethod_literal",
+                typing.Any,
+                typing.Callable[P, T],
+                bool,
+            ],
+            typing.Callable[P, T],
+        ],
+    ]:
+        """Register the implementation for the given value or type."""
+
+        return self.dispatcher.register(value, func=method, literal=literal)
+
+    def __get__(self, obj, cls=None):
+        """Descriptor wrapper around wrapper function."""
+
+        def _method(*args, **kwargs):
+            """Method equivalent of wrapper."""
+            # check that args were provided
+            if not args:
+                # provide informative exception if not
+                funcname = getattr(self.func, "__name__", f"{self.func}")
+                try:
+                    first_param = _get_signature(self.func).parameters[0].name
+                except TypeError:
+                    first_param = "unknown"
+
+                val = kwargs.get(first_param) or "123"
+
+                raise TypeError(
+                    "When used with singledispatchmethod or "
+                    f"singledispatchmethod_literal, {funcname} requires at "
+                    f"least 1 positional argument. "
+                    "Try calling the function like "
+                    f"{funcname}({val}, ...) instead of "
+                    f"{funcname}({first_param}={val})."
+                )
+
+            # try to dispatch literally
+            method = self.dispatcher.dispatch(
+                args[0], literal=True, passthru=False
+            )
+            if method is not None:
+                return method.__get__(obj, cls)(*args, **kwargs)
+
+            # dispatch by class
+            method = self.dispatcher.dispatch(args[0].__class__)
+            return method.__get__(obj, cls)(*args, **kwargs)
+
+        _method.__isabstractmethod__ = self.__isabstractmethod__
+        _method.register = self.register
+        _method.registry = self.dispatcher.registry
+        _method.literal_registry = self.dispatcher.literal_registry
+        functools.update_wrapper(_method, self.func)
+
+        return _method
+
+    @property
+    def __isabstractmethod__(self):
+        return getattr(self.func, "__isabstractmethod__", False)
+
+
+__all__ = ["singledispatch_literal", "singledispatchmethod_literal"]

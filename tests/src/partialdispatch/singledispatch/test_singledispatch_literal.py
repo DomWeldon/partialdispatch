@@ -17,11 +17,11 @@ def test__singledispatch_literal__error_on_invalid_sig():
     with pytest.raises(TypeError) as e:
         mod.singledispatch_literal(invalid_sig_func)
 
-    message = str(e)
+    message = e.exconly()
 
     # assert
     assert "Invalid function passed" in message
-    assert "Change argument 'a' to be positional" in message
+    assert "Change argument 'a: int = 1' to be positional" in message
     assert invalid_sig_func.__name__ in message
 
 
@@ -29,10 +29,7 @@ def test__singledispatch_literal__error_when_called_kwargs_only():
     """Check that a TypeError is raised when no positional args passed"""
     # arrange
     func = mod.singledispatch_literal(lambda x, y: (x, y))
-    expected_msg = (
-        "<lambda> requires at least one argument, x, "
-        "to be passed positionally."
-    )
+    expected_msg = "<lambda> requires at least 1 positional argument"
 
     # act
     with pytest.raises(TypeError) as e:

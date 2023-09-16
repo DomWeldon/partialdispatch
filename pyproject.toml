@@ -20,10 +20,8 @@ dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
     "mypy>=1.5.1",
+    "pytest-custom-exit-code>=0.3.0",
     "pdm-multirun @ file:///${PROJECT_ROOT}/../pdm-multirun",
-]
-repl = [
-    "bpython>=0.24",
 ]
 
 [build-system]
@@ -34,4 +32,4 @@ build-backend = "pdm.backend"
 line_length = 79
 
 [tool.pytest.ini_options]
-addopts = "--cov=partialdispatch --cov-append --cov-report html"
+# addopts = "--cov=partialdispatch --cov-append --cov-report html"

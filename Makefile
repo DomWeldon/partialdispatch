@@ -19,6 +19,22 @@ repl310:
 repl311:
 	pdm multirun -i 3.11 pdm run bpython
 
+.PHONY: setup-venvs
+setup-venvs:
+	PDM_MULTIRUN_USE_VENVS=0 pdm multirun pdm venv create --name \$$PDM_MULTIRUN_CURRENT \$$PDM_MULTIRUN_CURRENT
+
+.PHONY: install
+install:
+	pdm multirun pdm install
+
+.PHONY: sync
+sync:
+	pdm multirun pdm sync
+
+
+.PHONY: test
+test:
+	pdm multirun pytest tests
 
 .PHONY: fix
 fix:
@@ -26,6 +42,4 @@ fix:
 	pdm run isort .
 	pdm run ruff . --fix
 
-.PHONY: test
-test:
-	pdm multirun pdm run pytest tests
+init: setup-venvs sync
