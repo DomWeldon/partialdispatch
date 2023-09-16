@@ -1,20 +1,56 @@
-Testing:
-  runs-on: ${{ matrix.os }}
-  strategy:
-    matrix:
-      python-version: [3.7, 3.8, 3.9, 3.10, 3.11, 3.12]
-      os: [ubuntu-latest, macOS-latest, windows-latest]
+name: Run Tests
+on: [push]
+jobs:
+  Tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12.0-rc.2"]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up PDM
+        uses: pdm-project/setup-pdm@v3.3
+        with:
+          python-version: ${{ matrix.python-version }}
 
-  steps:
-    - uses: actions/checkout@v3
-    - name: Set up PDM
-      uses: pdm-project/setup-pdm@v2
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          pdm sync -G test
+      - name: Run Tests
+        run: |
+          pdm run -v pytest tests
+  
+  CodeQualityChecks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up PDM
+        uses: pdm-project/setup-pdm@v3.3
+      - name: Install dependencies
+        run: |
+          pdm sync -G checks
+      - name: Bandit
+        run: |
+          pdm run bandit -r src
+      - name: Black
+        run: |
+          pdm run black src tests
+      - name: Ruff Linting
+        run: |
+          pdm run ruff src tests
+      - name: Isort
+        run: |
+          pdm run isort src tests
 
-    - name: Install dependencies
-      run: |
-        pdm sync -G test
-    - name: Run Tests
-      run: |
-        pdm run -v pytest tests
+  Build:
+    name: Check Build
+    runs-on: ubuntu-latest
+    needs: 
+      - Tests 
+      - CodeQualityChecks
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pdm-project/setup-pdm@v3
+      - name: Attempt build
+        run: pdm build

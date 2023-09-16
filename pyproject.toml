@@ -26,6 +26,12 @@ test = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
 ]
+checks = [
+    "ruff>=0.0.285",
+    "isort>=5.12.0",
+    "black>=23.7.0",
+    "bandit>=1.7.5",
+]
 
 [build-system]
 requires = ["pdm-backend"]
@@ -35,4 +41,4 @@ build-backend = "pdm.backend"
 line_length = 79
 
 [tool.pytest.ini_options]
-# addopts = "--cov=partialdispatch --cov-append --cov-report html"
+addopts = "--cov=partialdispatch --cov-append --cov-report html"
