@@ -1,28 +1,52 @@
-name: Create Release
+name: Create GitHub release
 on:
   push:
-    branches:
-      - main
+    tags:
+      - "*"
+    branches-ignore:
+      - "*"
+env:
+  GITHUB_REF_NAME: ${{ github.ref_name }}
 jobs:
-  checks:
-    uses: ./.github/workflows/push-checks.yml
-
-  bump-version:
-    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+  github-release:
     runs-on: ubuntu-latest
-    name: "Bump version and create changelog with commitizen"
-    needs: []
+    name: Create Latest GitHub Release
     permissions:
       contents: write
     steps:
       - name: Check out
         uses: actions/checkout@v3
+      - name: Check Tag for Release Type
+        id: tag-type
+        run: |
+          if [[ ${{ github.event.ref }} =~ ^refs\/tags\/[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "releaseType=latest" >> $GITHUB_OUTPUT
+          fi
+          if [[ ${{ github.event.ref }} =~ ^refs\/tags\/[0-9]+\.[0-9]+\.[0-9]*[a-z]+[0-9]*$ ]]; then
+            echo "releaseType=dev" >> $GITHUB_OUTPUT
+          fi
+      - name: Generate source artifacts
+        id: generate-artifacts
+        run: |
+          mkdir dist
+          zip -r dist/${GITHUB_REF_NAME}.zip . -x "dist/" -x ".*"
+          tar --exclude "./dist" --exclude "./.*" -zcvf dist/${GITHUB_REF_NAME}.tar.gz .
+          ls -lah dist/
+      - name: Set up PDM
+        uses: pdm-project/setup-pdm@v3.3
+      - name: Install dependencies
+        run: |
+          pdm sync -G ci
+      - name: Generate release notes
+        run: |
+          pdm run cz changelog $GITHUB_REF_NAME --file RELEASE-NOTES.md
+          cat RELEASE-NOTES.md
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
-          # token: "${{ secrets.PERSONAL_ACCESS_TOKEN }}"
-          fetch-depth: 0
-      - name: Create bump and changelog
-        uses: commitizen-tools/commitizen-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-  
-  # github-release:
+          prerelease: ${{ steps.tag-type.outputs.releaseType == 'latest' }}
+          body_path: RELEASE-NOTES.md
+          generate_release_notes: false
+          files: |
+            dist/*
+
