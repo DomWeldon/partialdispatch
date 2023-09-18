@@ -1,3 +1,11 @@
+## 0.1.3 (2023-09-18)
+
+### Fix
+
+- ci using deploy team
+- use deploy key
+- release and publish in same action
+
 ## 0.1.2 (2023-09-18)
 
 ### Fix
