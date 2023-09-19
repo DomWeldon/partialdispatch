@@ -32,4 +32,4 @@ jobs:
       - name: Bump version
         run: |
           pdm run cz --no-raise 21 bump --yes --changelog --check-consistency
-          git push origin --tags
+          git push origin main --tags

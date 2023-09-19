@@ -1,6 +1,6 @@
 [project]
 name = "partialdispatch"
-version = "0.1.2"
+version = "0.1.3"
 description = "Function-level logic inspried by functools.singledispatch"
 authors = [
     {name = "Dom Weldon",email = "dom.weldon@gmail.com"},
@@ -20,7 +20,7 @@ dev = [
     "pytest-cov>=4.1.0",
     "mypy>=1.5.1",
     "pytest-custom-exit-code>=0.3.0",
-    "pdm-multirun @ file:///${PROJECT_ROOT}/../pdm-multirun",
+    # "pdm-multirun @ file:///${PROJECT_ROOT}/../pdm-multirun",
 ]
 test = [
     "pytest>=7.4.0",
