@@ -1,3 +1,12 @@
+## 0.1.4 (2023-09-19)
+
+### Fix
+
+- temporarily removing pdm-multirun dev dependency
+- ci using deploy team
+- use deploy key
+- release and publish in same action
+
 ## 0.1.2 (2023-09-18)
 
 ### Fix
