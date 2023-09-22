@@ -80,6 +80,16 @@ for v in vals:
     print(f"Calling func with {v}: {fmt[0]}{output}{fmt[1]}")
 ```
 
+```
+$ pdm run python example.py 
+Calling func with 123: int: a=123, b=None
+Calling func with some string: default: a='some string', b=None
+Calling func with 49: The meaning of life a=49, b=None
+Calling func with Pet.Cat: meow! a=<Pet.Cat: '🐱'>, b=None
+Calling func with Pet.Dog: Good boy! a=<Pet.Dog: '🐕'>, b=None
+Calling func with Pet.Shark: default: a=<Pet.Shark: '🦈'>, b=None
+Calling func with None: default: a=None, b=None
+```
 
 Drawbacks
 
