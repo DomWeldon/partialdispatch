@@ -4,9 +4,9 @@ permissions:
 on:
   push:
     tags:
-      - "*"
-    branches-ignore:
-      - "*"
+      - ".*"
+    # branches-ignore:
+    #   - ".*"
 env:
   GITHUB_REF_NAME: ${{ github.ref_name }}
 jobs:
