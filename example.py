@@ -44,6 +44,11 @@ def _(a, b):
 
     return f"Good boy! {a=}, {b=}"
 
+@func.register(int, literal=True)
+def _(a, b):
+
+    return f"Literally, int! {a=}, {b=}"
+
 
 vals = [
     123,
@@ -52,6 +57,7 @@ vals = [
     Pet.Cat,
     Pet.Dog,
     Pet.Shark,
+    int,
     None,
 ]
 
