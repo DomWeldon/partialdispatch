@@ -4,13 +4,15 @@
 
 # partialdispatch
 
+[Google Slides explaining how this repository works!](https://docs.google.com/presentation/d/1W4Tdo5JXOTbrLkc5qN8Y8UoLMfMjt-zBoLPsZ54A6TY/edit?usp=sharing).
+
 This project is currently under development, with a release of a partialdispatch function expected soon. If you're interested in it, please get in touch, but but be aware this is very much "building in (semi)-public", until a proper documented version is up.
 
 Currently, the only supported function is `partialdispatch.singledispatch_literal`, which implements the functionality of [functools.singledispatch](https://docs.python.org/3/library/functools.html#functools.singledispatch) for [literal types](https://docs.python.org/3/library/functools.html#functools.singledispatch) and values, including [enums](https://docs.python.org/3/library/enum.html).
 
 ## `partialdispatch.singledispatch_literal`
 
-Transform a function into a sing-dispatch generic function, which also supports dispatching to a different callable based on a literal value.
+Transform a function into a single-dispatch generic function, which also supports dispatching to a different callable based on a literal value.
 
 Literal values are specified using either the [typing.Literal](https://docs.python.org/3/library/typing.html#typing.Literal) type annotation, a literal [type such as an `enum`](https://docs.python.org/3/library/enum.html), or by passing the keyword argument `literal=True` to the `register` function.
 
